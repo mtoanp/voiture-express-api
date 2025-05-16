@@ -1,86 +1,53 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { DatabaseService } from '@/core/database/database.service';
 
 @Injectable()
 export class UserService {
-  private users = [
-    {
-      id: 1,
-      name: 'Alice Johnson',
-      email: 'alice.johnson@example.com',
-      role: 'admin',
-    },
-    {
-      id: 2,
-      name: 'Bob Smith',
-      email: 'bob.smith@example.com',
-      role: 'user',
-    },
-    {
-      id: 3,
-      name: 'Charlie Lee',
-      email: 'charlie.lee@example.com',
-      role: 'user',
-    },
-    {
-      id: 4,
-      name: 'Dana White',
-      email: 'dana.white@example.com',
-      role: 'admin',
-    },
-    {
-      id: 5,
-      name: 'Evan Kim',
-      email: 'evan.kim@example.com',
-      role: 'user',
-    },
-  ];
+  constructor(private readonly databaseService: DatabaseService) {}
 
-  findAll(role?: 'user' | 'admin') {
-    if (role) {
-      return this.users.filter((user) => user.role === role);
-    } else {
-      return this.users;
-    }
+  async findAll(role?: 'user' | 'admin') {
+    return this.databaseService.user.findMany({
+      where: role ? { role } : undefined,
+    });
   }
 
-  findOne(id: number) {
-    const user = this.users.find((user) => user.id === id);
-    if (!user) throw new NotFoundException();
+  async findOne(id: number) {
+    const user = await this.databaseService.user.findUnique({
+      where: { id },
+    });
+    if (!user) throw new NotFoundException(`User #${id} not found`);
     return user;
   }
 
-  create(createUserDto: CreateUserDto) {
-    const userByHighestId = [...this.users].sort((a, b) => b.id - a.id);
-    const highestId = userByHighestId.length > 0 ? userByHighestId[0].id : 0;
-
-    const newUser = {
-      id: highestId + 1,
-      ...createUserDto,
-    };
-
-    this.users.push(newUser);
-    return newUser;
+  async create(createUserDto: CreateUserDto) {
+    return this.databaseService.user.create({
+      data: createUserDto,
+    });
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    const index = this.users.findIndex((user) => user.id === id);
-    if (index === -1) {
-      throw new NotFoundException();
-    }
+  async update(id: number, updateUserDto: UpdateUserDto) {
+    // Optional: check existence
+    const user = await this.databaseService.user.findUnique({
+      where: { id },
+    });
+    if (!user) throw new NotFoundException(`user #${id} not found`);
 
-    this.users[index] = {
-      ...this.users[index],
-      ...updateUserDto,
-    };
-
-    return this.users[index];
+    return this.databaseService.user.update({
+      where: { id },
+      data: updateUserDto,
+    });
   }
 
-  remove(id: number) {
-    const removeUser = this.users.find((user) => user.id === id);
-    this.users = this.users.filter((user) => user.id !== id);
-    return this.users;
+  async remove(id: number) {
+    const user = await this.databaseService.user.findUnique({
+      where: { id },
+    });
+    if (!user) throw new NotFoundException(`user #${id} not found`);
+
+    return this.databaseService.user.delete({
+      where: { id },
+    });
   }
 }
