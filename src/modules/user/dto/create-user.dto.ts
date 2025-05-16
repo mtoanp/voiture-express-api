@@ -8,7 +8,8 @@ import {
   IsEnum,
 } from 'class-validator';
 import xss from 'xss';
-import { NormalizeEmail } from '../normalize-email.decorator';
+
+import { NormalizeEmail } from '@/common/decorators';
 
 export enum UserRole {
   USER = 'user',
