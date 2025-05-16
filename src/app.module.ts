@@ -6,7 +6,6 @@ import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
-    // eslint-disable-next-line
     ConfigModule.forRoot({
       isGlobal: true, // makes it available app-wide
     }),
