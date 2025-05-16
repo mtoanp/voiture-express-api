@@ -8,6 +8,7 @@ import { UserModule } from './modules/user/user.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true, // makes it available app-wide
+      // envFilePath: 'src/config/.env',
     }),
 
     UserModule,
