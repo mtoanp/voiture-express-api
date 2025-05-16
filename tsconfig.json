@@ -1,5 +1,15 @@
 {
   "compilerOptions": {
+    // Set the base directory for module resolution to the "src" folder.
+    // This allows using clean absolute imports like "@/common/helpers" instead of long relative paths.
+    "baseUrl": "./src",
+
+    // Define alias paths relative to "baseUrl"
+    "paths": {
+      "@/*": ["*"]
+    },
+    "outDir": "./dist",
+    "types": ["node"],
     "module": "commonjs",
     "declaration": true,
     "removeComments": true,
@@ -8,14 +18,14 @@
     "allowSyntheticDefaultImports": true,
     "target": "ES2023",
     "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": true,
     "forceConsistentCasingInFileNames": true,
     "noImplicitAny": false,
     "strictBindCallApply": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "resolveJsonModule": true, // ✅ allows importing JSON
+    "esModuleInterop": true // ✅ enables proper import syntax
   }
 }
