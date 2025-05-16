@@ -1,26 +1,30 @@
-# Stage 1: Build
+# ===== STAGE 1: Build the NestJS app =====
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
+# Install deps first for layer caching
 COPY package*.json ./
 RUN npm ci
 
+# Copy the full source
 COPY . .
+
+# Build the app (outputs dist/src/main.js)
 RUN npm run build
 
-# Stage 2: Run
+
+# ===== STAGE 2: Run only the built app =====
 FROM node:22-alpine
 
 WORKDIR /app
 
-# Only copy what's needed
+# Copy only needed parts from builder
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
 
-# Set env
 ENV NODE_ENV=production
 
-# Start app
-CMD ["node", "dist/main.js"]
+# 🚀 Important: entry is inside dist/src/
+CMD ["node", "dist/src/main.js"]
