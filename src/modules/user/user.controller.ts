@@ -15,10 +15,8 @@ import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { RemovePasswordInterceptor } from './interceptors/remove-password.interceptor';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { CurrentUser, Roles } from '@/common/decorators';
-import { RolesGuard } from '../auth/roles.guard';
-import { IsOwnerGuard } from '../auth/is-owner.guard';
+import { JwtAuthGuard, RolesGuard, IsOwnerGuard } from '@/common/guards';
 
 @UseInterceptors(RemovePasswordInterceptor)
 @Controller('users') // /users
