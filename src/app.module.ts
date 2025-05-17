@@ -6,6 +6,7 @@ import { UserModule } from './modules/user/user.module';
 import { DatabaseModule } from './core/database/database.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
+import { AuthModule } from './modules/auth/auth.module';
 
 @Module({
   imports: [
@@ -18,20 +19,20 @@ import { APP_GUARD } from '@nestjs/core';
     // ✅ Set up named rate limit profiles (short, medium, long)
     ThrottlerModule.forRoot({
       throttlers: [
-        {
-          name: 'short',
-          ttl: 1000,
-          limit: 3,
-        },
-        {
-          name: 'medium',
-          ttl: 10000,
-          limit: 2,
-        },
+        // {
+        //   name: 'short',
+        //   ttl: 1000,
+        //   limit: 3,
+        // },
+        // {
+        //   name: 'medium',
+        //   ttl: 10000,
+        //   limit: 2,
+        // },
         {
           name: 'long',
           ttl: 60000,
-          limit: 2,
+          limit: 100, //2
         },
       ],
     }),
@@ -41,6 +42,8 @@ import { APP_GUARD } from '@nestjs/core';
 
     // ✅ Shared app-wide database access
     DatabaseModule,
+
+    AuthModule,
   ],
 
   controllers: [AppController],
