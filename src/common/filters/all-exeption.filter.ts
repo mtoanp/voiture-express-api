@@ -4,77 +4,71 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
-import { BaseExceptionFilter, HttpAdapterHost } from '@nestjs/core';
-// import { PrismaClientValidationError } from 'generated/prisma/runtime/library';
-// import { MyLoggerService } from './my-logger/my-logger.service';
-import path from 'path';
-
-type MyResponseObj = {
-  statusCode: number;
-  timestamp: string;
-  path: string;
-  response: string | object;
-};
+import { HttpAdapterHost } from '@nestjs/core';
+import { Prisma } from '@prisma/client';
 
 @Catch()
-// export class AllExceptionFilter extends BaseExceptionFilter {
-//   // private readonly logger = new MyLoggerService(AllExceptionFilter.name); // Use logger
-
-//   catch(exception: unknown, host: ArgumentsHost): void {
-//     const ctx = host.switchToHttp();
-//     const response = ctx.getResponse();
-//     const request = ctx.getRequest();
-
-//     const myResponseObj: MyResponseObj = {
-//       statusCode: 200,
-//       timestamp: new Date().toISOString(),
-//       path: request.url,
-//       response: '',
-//     };
-
-//     if (exception instanceof HttpException) {
-//       myResponseObj.statusCode = exception.getStatus();
-//       myResponseObj.response = exception.getResponse();
-//     } else if (exception instanceof PrismaClientValidationError) {
-//       myResponseObj.statusCode = 422;
-//       myResponseObj.response = exception.message.replaceAll(/\n/g, '');
-//     } else {
-//       myResponseObj.statusCode = HttpStatus.INTERNAL_SERVER_ERROR;
-//       myResponseObj.response = 'Internal Server Error';
-//     }
-
-//     response.status(myResponseObj.statusCode).json(myResponseObj);
-
-//     // this.logger.error(myResponseObj.response, AllExceptionFilter.name); // Log the error message
-
-//     super.catch(exception, host); // Call the parent class's catch method to handle the exception
-//   }
-// }
 export class AllExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(AllExceptionFilter.name);
+
   constructor(private readonly httpAdapterHost: HttpAdapterHost) {}
 
   catch(exception: unknown, host: ArgumentsHost): void {
     const { httpAdapter } = this.httpAdapterHost;
     const ctx = host.switchToHttp();
+    const request = ctx.getRequest();
 
-    const httpStatus =
-      exception instanceof HttpException
-        ? exception.getStatus()
-        : HttpStatus.INTERNAL_SERVER_ERROR;
+    let httpStatus = HttpStatus.INTERNAL_SERVER_ERROR;
+
+    if (exception instanceof HttpException) {
+      httpStatus = exception.getStatus();
+    } else if (
+      exception instanceof Prisma.PrismaClientKnownRequestError &&
+      exception.code === 'P2002'
+    ) {
+      httpStatus = HttpStatus.CONFLICT; // 409
+    }
+
+    const errorMessage = this.getErrorMessage(exception);
+    const path = httpAdapter.getRequestUrl(request);
 
     const responseBody = {
       statusCode: httpStatus,
       timestamp: new Date().toISOString(),
-      path: httpAdapter.getRequestUrl(ctx.getRequest()),
+      path,
+      message: errorMessage,
     };
 
-    // LOGGING HERE
-    // this.logger.error(
-    //   `Exception caught: ${JSON.stringify(responseBody)}\nException: ${exception instanceof Error ? exception.stack : exception}`,
-    // );
+    // structured error logging
+    this.logger.error(
+      `[${httpStatus}] ${path} → ${typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage)}`,
+      exception instanceof Error ? exception.stack : undefined,
+    );
 
-    // Reply to client
     httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
+  }
+
+  private getErrorMessage(exception: unknown): string | object {
+    if (exception instanceof HttpException) {
+      const res = exception.getResponse();
+      return typeof res === 'string' ? res : { ...res };
+    }
+
+    // ✅ Handle Prisma unique constraint error (e.g., email already exists)
+    if (
+      exception instanceof Prisma.PrismaClientKnownRequestError &&
+      exception.code === 'P2002'
+    ) {
+      const targetField = (exception.meta?.target as string[])?.[0] ?? 'field';
+      return `${targetField.charAt(0).toUpperCase() + targetField.slice(1)} is already in use`;
+    }
+
+    if (exception instanceof Error) {
+      return exception.message || 'Internal server error';
+    }
+
+    return 'Unexpected error occurred';
   }
 }
