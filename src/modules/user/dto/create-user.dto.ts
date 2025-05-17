@@ -17,10 +17,15 @@ export enum UserRole {
 }
 
 export class CreateUserDto {
+  // @IsUUID()
+  // id: string;
+
   @IsString()
   @MinLength(2)
   @MaxLength(50)
-  @Transform(({ value }) => xss(value.trim()))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? xss(value.trim()) : value,
+  )
   name: string;
 
   @IsEmail()
@@ -36,6 +41,6 @@ export class CreateUserDto {
   })
   password: string;
 
-  @IsEnum(UserRole, { message: 'Valid role required' })
-  role: UserRole;
+  // @IsEnum(UserRole, { message: 'Valid role required' })
+  // role: UserRole;
 }
