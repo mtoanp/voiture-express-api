@@ -20,7 +20,9 @@ export class CreateUserDto {
   @IsString()
   @MinLength(2)
   @MaxLength(50)
-  @Transform(({ value }) => xss(value.trim()))
+  @Transform(({ value }) =>
+    typeof value === 'string' ? xss(value.trim()) : value,
+  )
   name: string;
 
   @IsEmail()
