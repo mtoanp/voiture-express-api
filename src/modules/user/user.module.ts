@@ -8,5 +8,6 @@ import { HashService } from '@/core/crypto/hash.service';
   imports: [DatabaseModule], // 👈 required!
   controllers: [UserController],
   providers: [UserService, HashService],
+  exports: [UserService], // accessible from other modules that import this module (e.g. AuthModule)
 })
 export class UserModule {}

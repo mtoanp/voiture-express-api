@@ -15,13 +15,13 @@ export function setupSecurity(
   app.enableCors(corsOptions);
 
   // ✅ Add global validation pipe
-  //   app.useGlobalPipes(
-  //     new ValidationPipe({
-  //       whitelist: true, // Strip unknown fields
-  //       forbidNonWhitelisted: true, // Throw error on unknown fields
-  //       transform: true, // Auto-transform payloads into DTOs
-  //     }),
-  //   );
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true, // Strip unknown fields
+      forbidNonWhitelisted: true, // Throw error on unknown fields
+      transform: true, // Auto-transform payloads into DTOs
+    }),
+  );
 
   // And more (e.g., cookieParser, csurf)
 }
