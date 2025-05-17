@@ -9,11 +9,14 @@ import {
   Query,
   ParseIntPipe,
   ValidationPipe,
+  UseInterceptors,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { RemovePasswordInterceptor } from './interceptors/remove-password.interceptor';
 
+@UseInterceptors(RemovePasswordInterceptor)
 @Controller('users') // /users
 export class UserController {
   // Dependency Injection

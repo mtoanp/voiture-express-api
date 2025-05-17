@@ -3,6 +3,7 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DatabaseService } from '@/core/database/database.service';
 import { HashService } from '@/core/crypto/hash.service';
+import { UserRole } from './dto/create-user.dto';
 
 @Injectable()
 export class UserService {
@@ -18,10 +19,7 @@ export class UserService {
   }
 
   async findOne(id: number) {
-    const user = await this.databaseService.user.findUnique({
-      where: { id },
-    });
-    if (!user) throw new NotFoundException(`User #${id} not found`);
+    const user = await this.verifyUserExists(id);
     return user;
   }
 
@@ -35,16 +33,14 @@ export class UserService {
       data: {
         ...rest,
         password: hashedPassword,
+        role: UserRole.USER, // set default role for user
       },
     });
   }
 
   async update(id: number, updateUserDto: UpdateUserDto) {
     // Optional: check existence
-    const user = await this.databaseService.user.findUnique({
-      where: { id },
-    });
-    if (!user) throw new NotFoundException(`user #${id} not found`);
+    await this.verifyUserExists(id);
 
     return this.databaseService.user.update({
       where: { id },
@@ -53,13 +49,18 @@ export class UserService {
   }
 
   async remove(id: number) {
-    const user = await this.databaseService.user.findUnique({
-      where: { id },
-    });
-    if (!user) throw new NotFoundException(`user #${id} not found`);
+    await this.verifyUserExists(id);
 
     return this.databaseService.user.delete({
       where: { id },
     });
+  }
+
+  private async verifyUserExists(id: number) {
+    const user = await this.databaseService.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User #${id} not found`);
+    }
+    return user;
   }
 }

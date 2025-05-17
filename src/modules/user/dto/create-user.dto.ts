@@ -38,6 +38,6 @@ export class CreateUserDto {
   })
   password: string;
 
-  @IsEnum(UserRole, { message: 'Valid role required' })
-  role: UserRole;
+  // @IsEnum(UserRole, { message: 'Valid role required' })
+  // role: UserRole;
 }
