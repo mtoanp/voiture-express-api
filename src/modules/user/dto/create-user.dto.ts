@@ -17,6 +17,9 @@ export enum UserRole {
 }
 
 export class CreateUserDto {
+  // @IsUUID()
+  // id: string;
+
   @IsString()
   @MinLength(2)
   @MaxLength(50)

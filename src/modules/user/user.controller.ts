@@ -10,6 +10,7 @@ import {
   ParseIntPipe,
   ValidationPipe,
   UseInterceptors,
+  ParseUUIDPipe,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -28,7 +29,7 @@ export class UserController {
   }
 
   @Get(':id') // GET /:id
-  findOne(@Param('id', ParseIntPipe) id: number) {
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.findOne(id);
   }
 
@@ -39,14 +40,17 @@ export class UserController {
 
   @Patch(':id') // PATCH /:id
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body(ValidationPipe) updateUserDto: UpdateUserDto,
   ) {
     return this.userService.update(id, updateUserDto);
   }
 
   @Delete(':id') // DELETE /:id
-  remove(@Param('id', ParseIntPipe) id: number) {
+  remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.userService.remove(id);
   }
 }
+
+// @Param('id', ParseIntPipe) id: number)
+// @Param('id', ParseUUIDPipe) id: string)

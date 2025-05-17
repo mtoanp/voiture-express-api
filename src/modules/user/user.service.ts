@@ -18,7 +18,7 @@ export class UserService {
     });
   }
 
-  async findOne(id: number) {
+  async findOne(id: string) {
     const user = await this.verifyUserExists(id);
     return user;
   }
@@ -38,7 +38,7 @@ export class UserService {
     });
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(id: string, updateUserDto: UpdateUserDto) {
     // Optional: check existence
     await this.verifyUserExists(id);
 
@@ -48,7 +48,7 @@ export class UserService {
     });
   }
 
-  async remove(id: number) {
+  async remove(id: string) {
     await this.verifyUserExists(id);
 
     return this.databaseService.user.delete({
@@ -56,7 +56,7 @@ export class UserService {
     });
   }
 
-  private async verifyUserExists(id: number) {
+  private async verifyUserExists(id: string) {
     const user = await this.databaseService.user.findUnique({ where: { id } });
     if (!user) {
       throw new NotFoundException(`User #${id} not found`);
