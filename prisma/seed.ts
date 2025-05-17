@@ -1,21 +1,9 @@
 import { PrismaClient, Role } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
-
-const users = [
-  {
-    email: 'admin@example.com',
-    name: 'Admin User',
-    password: '123456', // ⚠️ Replace with hashed passwords in real apps
-    role: Role.admin,
-  },
-  {
-    email: 'user@example.com',
-    name: 'Regular User',
-    password: '123456',
-    role: Role.user,
-  },
-];
+const SALT_ROUNDS = 10;
+const hash = (password: string) => bcrypt.hash(password, SALT_ROUNDS);
 
 async function seed() {
   console.log('🚀 Starting seed...');
@@ -23,6 +11,23 @@ async function seed() {
   // Step 1: Clean up old data (in correct order if relations exist)
   // await prisma.$transaction([prisma.user.deleteMany()]);
   await prisma.user.deleteMany();
+
+  const users = [
+    {
+      id: crypto.randomUUID(),
+      email: 'admin@example.com',
+      name: 'Admin User',
+      password: await hash('123456'),
+      role: Role.admin,
+    },
+    {
+      id: crypto.randomUUID(),
+      email: 'user@example.com',
+      name: 'Regular User',
+      password: await hash('123456'),
+      role: Role.user,
+    },
+  ];
 
   // Step 2: Seed fresh data
   await prisma.user.createMany({
