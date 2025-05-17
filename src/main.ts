@@ -1,45 +1,39 @@
 import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
-import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionFilter } from '@/common/filters/all-exeption.filter';
-import helmet from 'helmet';
+import { setupSecurity } from '@/config/security.config';
 import packageJson from '../package.json';
 
 async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule);
 
-    // ✅ Set secure HTTP headers
-    app.use(helmet());
+    // 🔧 Load .env configuration service (for accessing CORS, PORT, etc.)
+    const configService = app.get(ConfigService);
 
-    // ✅ Add global validation pipe
-    // app.useGlobalPipes(
-    //   new ValidationPipe({
-    //     whitelist: true, // Strip unknown fields
-    //     forbidNonWhitelisted: true, // Throw error on unknown fields
-    //     transform: true, // Auto-transform payloads into DTOs
-    //   }),
-    // );
+    // ✅ Global security setup
+    setupSecurity(app, configService);
 
     // ✅ Global Exception Filter: handle & format all thrown errors
     const httpAdapterHost = app.get(HttpAdapterHost);
     app.useGlobalFilters(new AllExceptionFilter(httpAdapterHost));
 
-    // 🌐 Enable CORS
-    app.enableCors();
-
     // 📦 Global route prefix (e.g., /api/users)
     app.setGlobalPrefix('api');
 
-    // 📦 Access app version from package.json
-    const version = packageJson.version;
+    // 📦 Versioning route (e.g., /api/v1/users)
+    // app.enableVersioning({
+    //   type: VersioningType.URI,
+    // });
 
     // 🔧 Get PORT from .env
-    const configService = app.get(ConfigService);
     const port = configService.get<number>('PORT') ?? 3000;
 
     await app.listen(port);
+
+    // 📦 Access app version from package.json
+    const version = packageJson.version;
 
     console.log(`🚀 Server started on port ${port} (v${version})`);
   } catch (err) {
