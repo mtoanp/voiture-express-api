@@ -3,11 +3,15 @@ import { AppModule } from './app.module';
 import { ConfigService } from '@nestjs/config';
 import { ValidationPipe } from '@nestjs/common';
 import { AllExceptionFilter } from '@/common/filters/all-exeption.filter';
+import helmet from 'helmet';
 import packageJson from '../package.json';
 
 async function bootstrap() {
   try {
     const app = await NestFactory.create(AppModule);
+
+    // ✅ Set secure HTTP headers
+    app.use(helmet());
 
     // ✅ Add global validation pipe
     // app.useGlobalPipes(
