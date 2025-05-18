@@ -10,6 +10,8 @@ import { DatabaseService } from '@/core/database/database.service';
 import { HashService } from '@/core/crypto/hash.service';
 import { UserRole } from './dto/update-user.dto';
 import { AuthService } from '../auth/auth.service';
+import { CloudService } from '../cloud/cloud.service';
+import { extname } from 'path';
 
 @Injectable()
 export class UserService {
@@ -18,6 +20,7 @@ export class UserService {
     private readonly hashService: HashService,
     @Inject(forwardRef(() => AuthService))
     private readonly authService: AuthService,
+    private readonly cloudService: CloudService,
   ) {}
 
   async findAll(role?: 'user' | 'admin') {
@@ -59,6 +62,7 @@ export class UserService {
     // Immediately log them in
     const token = this.authService.login(user);
 
+    // Return user + access_token to controller > that will be forwarded to client
     return {
       access_token: token.access_token,
       user: {
@@ -73,10 +77,24 @@ export class UserService {
     // Optional: check existence
     await this.verifyUserExists(id);
 
-    return this.databaseService.user.update({
+    // update user
+    const user = await this.databaseService.user.update({
       where: { id },
       data: updateUserDto,
     });
+
+    // login with updated info
+    const token = this.authService.login(user);
+
+    // Return user + access_token to controller > that will be forwarded to client
+    return {
+      access_token: token.access_token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    };
   }
 
   async remove(id: string) {
@@ -85,6 +103,27 @@ export class UserService {
     return this.databaseService.user.delete({
       where: { id },
     });
+  }
+
+  async uploadDocument(id: string, file: Express.Multer.File) {
+    // Check user exist
+    const user = await this.verifyUserExists(id);
+
+    // Prepare file to upload
+    const fileExtension = extname(file.originalname);
+    const fileKey = `${id}${fileExtension}`;
+
+    // Upload file to s3 clound
+    const upload_url = await this.cloudService.upload(file, fileKey, 'product');
+
+    // Update user document_url
+    console.log(upload_url);
+    const updatedUser = await this.databaseService.user.update({
+      where: { id },
+      data: { document: upload_url },
+    });
+
+    return updatedUser;
   }
 
   private async verifyUserExists(id: string) {

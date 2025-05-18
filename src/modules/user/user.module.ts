@@ -4,9 +4,10 @@ import { UserController } from './user.controller';
 import { DatabaseModule } from '@/core/database/database.module';
 import { HashService } from '@/core/crypto/hash.service';
 import { AuthModule } from '../auth/auth.module';
+import { CloudModule } from '../cloud/cloud.module';
 
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule)], // 👈 required!
+  imports: [DatabaseModule, forwardRef(() => AuthModule), CloudModule], // 👈 required!
   controllers: [UserController],
   providers: [UserService, HashService],
   exports: [UserService], // accessible from other modules that import this module (e.g. AuthModule)
