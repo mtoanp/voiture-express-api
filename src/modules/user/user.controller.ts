@@ -10,6 +10,8 @@ import {
   UseInterceptors,
   ParseUUIDPipe,
   UseGuards,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -18,6 +20,8 @@ import { RemovePasswordInterceptor } from './interceptors/remove-password.interc
 import { CurrentUser, Roles } from '@/common/decorators';
 import { JwtAuthGuard, RolesGuard, IsOwnerGuard } from '@/common/guards';
 import { User } from './entities/user.entity';
+import { FileInterceptor } from '@nestjs/platform-express';
+import type { Multer } from 'multer';
 
 @UseInterceptors(RemovePasswordInterceptor)
 @Controller('users') // /users
@@ -65,7 +69,8 @@ export class UserController {
   // ✅ Allows user to update their own data or admin to update anyone
   // → JwtAuthGuard validates identity
   // → IsOwnerGuard checks if req.user matches :id OR has admin role
-  @UseGuards(JwtAuthGuard, IsOwnerGuard)
+  // @UseGuards(JwtAuthGuard, IsOwnerGuard)
+  @UseGuards(JwtAuthGuard)
   @Patch(':id') // PATCH /:id
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -82,6 +87,32 @@ export class UserController {
   remove(@Param('id', ParseUUIDPipe) id: string) {
     console.log('UserController > remove');
     return this.userService.remove(id);
+  }
+
+  // upload document
+  @Post(':id/upload-document')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max size
+      fileFilter: (req, file, cb) => {
+        const allowedTypes = ['application/pdf', 'image/jpeg'];
+        if (!allowedTypes.includes(file.mimetype)) {
+          return cb(new BadRequestException('Only PDF or JPEG allowed'), false);
+        }
+        cb(null, true);
+      },
+    }),
+  )
+  uploadDocument(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    console.log('uploadDocument', file);
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+
+    return this.userService.uploadDocument(id, file);
   }
 }
 

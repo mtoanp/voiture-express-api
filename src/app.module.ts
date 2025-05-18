@@ -7,6 +7,7 @@ import { DatabaseModule } from './core/database/database.module';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './modules/auth/auth.module';
+import { CloudModule } from './modules/cloud/cloud.module';
 
 @Module({
   imports: [
@@ -44,6 +45,8 @@ import { AuthModule } from './modules/auth/auth.module';
     DatabaseModule,
 
     AuthModule,
+
+    CloudModule,
   ],
 
   controllers: [AppController],
