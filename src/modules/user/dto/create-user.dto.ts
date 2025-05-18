@@ -1,33 +1,14 @@
-import { Transform } from 'class-transformer';
 import {
   IsString,
   IsEmail,
   MinLength,
   MaxLength,
   Matches,
-  IsEnum,
 } from 'class-validator';
-import xss from 'xss';
 
 import { NormalizeEmail } from '@/common/decorators';
 
-export enum UserRole {
-  USER = 'user',
-  ADMIN = 'admin',
-}
-
 export class CreateUserDto {
-  // @IsUUID()
-  // id: string;
-
-  @IsString()
-  @MinLength(2)
-  @MaxLength(50)
-  @Transform(({ value }) =>
-    typeof value === 'string' ? xss(value.trim()) : value,
-  )
-  name: string;
-
   @IsEmail()
   @NormalizeEmail()
   email: string;
@@ -40,7 +21,4 @@ export class CreateUserDto {
       'Password must contain at least one uppercase letter, one number, and one special character',
   })
   password: string;
-
-  // @IsEnum(UserRole, { message: 'Valid role required' })
-  // role: UserRole;
 }

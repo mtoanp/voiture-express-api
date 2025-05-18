@@ -1,15 +1,23 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { DatabaseService } from '@/core/database/database.service';
 import { HashService } from '@/core/crypto/hash.service';
-import { UserRole } from './dto/create-user.dto';
+import { UserRole } from './dto/update-user.dto';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly hashService: HashService,
+    @Inject(forwardRef(() => AuthService))
+    private readonly authService: AuthService,
   ) {}
 
   async findAll(role?: 'user' | 'admin') {
@@ -39,13 +47,26 @@ export class UserService {
     // ✅ Securely hash the password
     const hashedPassword = await this.hashService.hash(password);
 
-    return this.databaseService.user.create({
+    // Create the user
+    const user = await this.databaseService.user.create({
       data: {
         ...rest,
         password: hashedPassword,
         role: UserRole.USER, // set default role for user
       },
     });
+
+    // Immediately log them in
+    const token = this.authService.login(user);
+
+    return {
+      access_token: token.access_token,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    };
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
