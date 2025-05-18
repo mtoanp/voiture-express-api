@@ -35,6 +35,7 @@ async function bootstrap() {
     // 📦 Access app version from package.json
     const version = packageJson.version;
 
+    console.log('==================================================');
     console.log(`🚀 Server started on port ${port} (v${version})`);
   } catch (err) {
     console.error('❌ Failed to start NestJS app:', err);

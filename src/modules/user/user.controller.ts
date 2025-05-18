@@ -20,18 +20,19 @@ import { RemovePasswordInterceptor } from './interceptors/remove-password.interc
 import { CurrentUser, Roles } from '@/common/decorators';
 import { JwtAuthGuard, RolesGuard, IsOwnerGuard } from '@/common/guards';
 import { User } from './entities/user.entity';
-import { FileInterceptor } from '@nestjs/platform-express';
 import type { Multer } from 'multer';
+import { createFileUploadInterceptor } from '@/common/interceptors/file-upload.interceptor';
 
 @UseInterceptors(RemovePasswordInterceptor)
 @Controller('users') // /users
 export class UserController {
-  // Dependency Injection
-  constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) {} // Dependency Injection
 
-  // ✅ Only accessible to admin users
-  // → Requires valid JWT (JwtAuthGuard)
-  // → Then checks user role via RolesGuard + @Roles('admin')
+  /* --------------------------------------------------------------------
+   * admin-dashboard
+   * Secured route – accessible only to admin users with valid JWT
+   * Uses JwtAuthGuard + RolesGuard + @Roles('admin')
+   * -------------------------------------------------------------------- */
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Get('admin-dashboard')
@@ -39,39 +40,43 @@ export class UserController {
     return 'RolesGuard passed: This route is Restricted to admins';
   }
 
-  // ✅ Secures the route by allowing any authenticated user with valid JWT
-  // → JwtStrategy.validate() populates req.user, accessible via @CurrentUser()
-  @UseGuards(JwtAuthGuard)
-  @Get('profile')
-  getProfile(@CurrentUser() currentUser: User) {
-    console.log('UserController > profile');
-    return currentUser;
-  }
-
+  /* --------------------------------------------------------------------
+   * findAll
+   * Get all users, optionally filter by role (?role=user|admin)
+   * -------------------------------------------------------------------- */
   @Get() // GET /users or /users?role=value
   findAll(@Query('role') role?: 'user' | 'admin') {
     console.log('UserController > findAll');
     return this.userService.findAll(role);
   }
 
-  @Get(':id') // GET /:id
+  /* --------------------------------------------------------------------
+   * findOne
+   * Get single user by ID (UUID format required)
+   * -------------------------------------------------------------------- */
+  @Get(':id') // GET /users/:id
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     console.log('UserController > findOne');
     return this.userService.findOne(id);
   }
 
-  @Post() // POST /
+  /* --------------------------------------------------------------------
+   * create
+   * Public route to create a new user
+   * -------------------------------------------------------------------- */
+  @Post() // POST /users
   create(@Body() createUserDto: CreateUserDto) {
-    console.log('UserController > create', createUserDto);
+    console.log('UserController > create');
     return this.userService.create(createUserDto);
   }
 
-  // ✅ Allows user to update their own data or admin to update anyone
-  // → JwtAuthGuard validates identity
-  // → IsOwnerGuard checks if req.user matches :id OR has admin role
-  // @UseGuards(JwtAuthGuard, IsOwnerGuard)
-  @UseGuards(JwtAuthGuard)
-  @Patch(':id') // PATCH /:id
+  /* --------------------------------------------------------------------
+   * update
+   * Update a user’s data – allowed for the user or an admin
+   * Uses JwtAuthGuard + IsOwnerGuard
+   * -------------------------------------------------------------------- */
+  @UseGuards(JwtAuthGuard, IsOwnerGuard)
+  @Patch(':id') // PATCH /users/:id
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -81,28 +86,26 @@ export class UserController {
     return this.userService.update(id, updateUserDto);
   }
 
-  // ✅ Same logic as update(): only the owner or an admin can delete a user
+  /* --------------------------------------------------------------------
+   * remove
+   * Delete user – allowed for the user or an admin
+   * Uses JwtAuthGuard + IsOwnerGuard
+   * -------------------------------------------------------------------- */
   @UseGuards(JwtAuthGuard, IsOwnerGuard)
-  @Delete(':id') // DELETE /:id
+  @Delete(':id') // DELETE /users/:id
   remove(@Param('id', ParseUUIDPipe) id: string) {
     console.log('UserController > remove');
     return this.userService.remove(id);
   }
 
-  // upload document
+  /* --------------------------------------------------------------------
+   * uploadDocument
+   * Use Custom FileUpload Interceptor
+   * Upload a PDF or JPEG document for the user
+   * Validates file type and size (max 5MB)
+   * -------------------------------------------------------------------- */
+  @UseInterceptors(createFileUploadInterceptor())
   @Post(':id/upload-document')
-  @UseInterceptors(
-    FileInterceptor('file', {
-      limits: { fileSize: 5 * 1024 * 1024 }, // 5MB max size
-      fileFilter: (req, file, cb) => {
-        const allowedTypes = ['application/pdf', 'image/jpeg'];
-        if (!allowedTypes.includes(file.mimetype)) {
-          return cb(new BadRequestException('Only PDF or JPEG allowed'), false);
-        }
-        cb(null, true);
-      },
-    }),
-  )
   uploadDocument(
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
@@ -115,7 +118,3 @@ export class UserController {
     return this.userService.uploadDocument(id, file);
   }
 }
-
-// @Param('id', ParseIntPipe) id: number)
-// @Param('id', ParseUUIDPipe) id: string)
-// Body(ValidationPipe) createUserDto: CreateUserDto to validate individual fields

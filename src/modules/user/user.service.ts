@@ -15,6 +15,9 @@ import { extname } from 'path';
 
 @Injectable()
 export class UserService {
+  /* --------------------------------------------------------------------
+   * Dependency Injection
+   * -------------------------------------------------------------------- */
   constructor(
     private readonly databaseService: DatabaseService,
     private readonly hashService: HashService,
@@ -23,17 +26,30 @@ export class UserService {
     private readonly cloudService: CloudService,
   ) {}
 
+  /* --------------------------------------------------------------------
+   * findAll
+   * Get all users, optionally filtered by role
+   * -------------------------------------------------------------------- */
   async findAll(role?: 'user' | 'admin') {
     return this.databaseService.user.findMany({
       where: role ? { role } : undefined,
     });
   }
 
+  /* --------------------------------------------------------------------
+   * findOne
+   * Get single user by ID, with existence check
+   * -------------------------------------------------------------------- */
   async findOne(id: string) {
     const user = await this.verifyUserExists(id);
     return user;
   }
 
+  /* --------------------------------------------------------------------
+   * findByEmail
+   * Get user by email (used in login/validation flows)
+   * Throws NotFoundException if not found
+   * -------------------------------------------------------------------- */
   async findByEmail(email: string) {
     const user = await this.databaseService.user.findUnique({
       where: { email },
@@ -44,6 +60,11 @@ export class UserService {
     return user;
   }
 
+  /* --------------------------------------------------------------------
+   * create
+   * Create new user and return access_token + user info
+   * Password is hashed before saving
+   * -------------------------------------------------------------------- */
   async create(createUserDto: CreateUserDto) {
     const { password, ...rest } = createUserDto;
 
@@ -73,6 +94,10 @@ export class UserService {
     };
   }
 
+  /* --------------------------------------------------------------------
+   * update
+   * Update user info and return refreshed access_token
+   * -------------------------------------------------------------------- */
   async update(id: string, updateUserDto: UpdateUserDto) {
     // Optional: check existence
     await this.verifyUserExists(id);
@@ -97,6 +122,10 @@ export class UserService {
     };
   }
 
+  /* --------------------------------------------------------------------
+   * remove
+   * Delete user by ID, with existence check
+   * -------------------------------------------------------------------- */
   async remove(id: string) {
     await this.verifyUserExists(id);
 
@@ -105,11 +134,16 @@ export class UserService {
     });
   }
 
+  /* --------------------------------------------------------------------
+   * uploadDocument
+   * Upload user document (JPEG/PDF) to S3 and store URL in DB
+   * Save the s3-file url to data: user
+   * -------------------------------------------------------------------- */
   async uploadDocument(id: string, file: Express.Multer.File) {
     // Check user exist
     const user = await this.verifyUserExists(id);
 
-    // Prepare file to upload
+    // Prepare file for cloud upload
     const fileExtension = extname(file.originalname);
     const fileKey = `${id}${fileExtension}`;
 
@@ -126,6 +160,11 @@ export class UserService {
     return updatedUser;
   }
 
+  /* --------------------------------------------------------------------
+   * verifyUserExists
+   * Utility method to check if a user exists by ID
+   * Throws NotFoundException if not found
+   * -------------------------------------------------------------------- */
   private async verifyUserExists(id: string) {
     const user = await this.databaseService.user.findUnique({ where: { id } });
     if (!user) {

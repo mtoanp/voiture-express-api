@@ -12,8 +12,10 @@ export class IsOwnerGuard implements CanActivate {
     const user = req.user; // from JwtStrategy
     const targetId = req.params.id; // ID from route (e.g. /users/:id)
 
+    console.log('> IsOwnerGuard');
+
     // ✅ Allow if the user owns the resource OR has admin role
-    if (user.userId === targetId || user.role === 'admin') {
+    if (user.id === targetId || user.role === 'admin') {
       return true;
     }
 
