@@ -20,6 +20,8 @@ model User {
   email     String   @unique
   name      String?
   password  String
+  tel       String?
+  document  String?
   role      Role
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

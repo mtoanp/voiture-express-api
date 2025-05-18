@@ -1,6 +1,8 @@
-import { Controller, Post, Body } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards, Get } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { JwtAuthGuard } from '@/common/guards';
+import { CurrentUser } from '@/common/decorators';
 
 @Controller('auth')
 export class AuthController {
@@ -22,5 +24,13 @@ export class AuthController {
         role: user.role,
       },
     };
+  }
+
+  // ✅ Check token validity and return current user info
+  @UseGuards(JwtAuthGuard)
+  @Get('checkAndRefreshToken') // /auth/checkAndRefreshToken
+  checkAndRefreshToken(@CurrentUser() currentUser: any) {
+    console.log('AuthController > checkAndRefreshToken', currentUser);
+    return currentUser;
   }
 }

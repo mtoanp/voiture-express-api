@@ -17,6 +17,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { RemovePasswordInterceptor } from './interceptors/remove-password.interceptor';
 import { CurrentUser, Roles } from '@/common/decorators';
 import { JwtAuthGuard, RolesGuard, IsOwnerGuard } from '@/common/guards';
+import { User } from './entities/user.entity';
 
 @UseInterceptors(RemovePasswordInterceptor)
 @Controller('users') // /users
@@ -38,22 +39,26 @@ export class UserController {
   // → JwtStrategy.validate() populates req.user, accessible via @CurrentUser()
   @UseGuards(JwtAuthGuard)
   @Get('profile')
-  getProfile(@CurrentUser() user: any) {
-    return user;
+  getProfile(@CurrentUser() currentUser: User) {
+    console.log('UserController > profile');
+    return currentUser;
   }
 
   @Get() // GET /users or /users?role=value
   findAll(@Query('role') role?: 'user' | 'admin') {
+    console.log('UserController > findAll');
     return this.userService.findAll(role);
   }
 
   @Get(':id') // GET /:id
   findOne(@Param('id', ParseUUIDPipe) id: string) {
+    console.log('UserController > findOne');
     return this.userService.findOne(id);
   }
 
   @Post() // POST /
   create(@Body() createUserDto: CreateUserDto) {
+    console.log('UserController > create', createUserDto);
     return this.userService.create(createUserDto);
   }
 
@@ -65,7 +70,9 @@ export class UserController {
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() currentUser: User,
   ) {
+    console.log('UserController > update', updateUserDto, currentUser.id);
     return this.userService.update(id, updateUserDto);
   }
 
@@ -73,6 +80,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard, IsOwnerGuard)
   @Delete(':id') // DELETE /:id
   remove(@Param('id', ParseUUIDPipe) id: string) {
+    console.log('UserController > remove');
     return this.userService.remove(id);
   }
 }

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -11,7 +11,7 @@ import { HashService } from '@/core/crypto/hash.service';
 @Module({
   imports: [
     ConfigModule, // ✅ Access to environment variables (e.g., JWT_SECRET)
-    UserModule, // ✅ Provides UserService (for validating users in AuthService)
+    forwardRef(() => UserModule), // ✅ Provides UserService (for validating users in AuthService)
     PassportModule, // ✅ Enables Passport strategies (like JWT)
     JwtModule.registerAsync({
       // ✅ Configures JwtService with dynamic values
