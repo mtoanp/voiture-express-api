@@ -1,5 +1,5 @@
 import { Injectable, InternalServerErrorException } from '@nestjs/common';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
+import { DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
 import { s3Client } from './s3.config';
 
 @Injectable()
@@ -28,6 +28,23 @@ export class CloudService {
     } catch (error) {
       console.error('S3 upload failed:', error);
       throw new InternalServerErrorException('Failed to upload document to S3');
+    }
+  }
+
+  async delete(key: string): Promise<void> {
+    const bucket = process.env.AWS_BUCKET_NAME!;
+    try {
+      await s3Client.send(
+        new DeleteObjectCommand({
+          Bucket: bucket,
+          Key: key,
+        }),
+      );
+    } catch (error) {
+      console.error('S3 delete failed:', error);
+      throw new InternalServerErrorException(
+        'Failed to delete document from S3',
+      );
     }
   }
 }
