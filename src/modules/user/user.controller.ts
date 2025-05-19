@@ -41,6 +41,36 @@ export class UserController {
   }
 
   /* --------------------------------------------------------------------
+   * uploadDocument
+   * Use Custom FileUpload Interceptor
+   * Upload a PDF or JPEG document for the user
+   * Validates file type and size (max 5MB)
+   * -------------------------------------------------------------------- */
+  @UseInterceptors(createFileUploadInterceptor())
+  @Post(':id/upload-document')
+  uploadDocument(
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    console.log('UserController > uploadDocument', file);
+    if (!file) {
+      throw new BadRequestException('No file provided');
+    }
+
+    return this.userService.uploadDocument(id, file);
+  }
+
+  /* --------------------------------------------------------------------
+   * removeDocument
+   * Deletes the user's uploaded document from S3
+   * -------------------------------------------------------------------- */
+  @Delete(':id/remove-document')
+  removeDocument(@Param('id', ParseUUIDPipe) id: string) {
+    console.log('UserController > removeDocument');
+    return this.userService.removeDocument(id);
+  }
+
+  /* --------------------------------------------------------------------
    * findAll
    * Get all users, optionally filter by role (?role=user|admin)
    * -------------------------------------------------------------------- */
@@ -96,25 +126,5 @@ export class UserController {
   remove(@Param('id', ParseUUIDPipe) id: string) {
     console.log('UserController > remove');
     return this.userService.remove(id);
-  }
-
-  /* --------------------------------------------------------------------
-   * uploadDocument
-   * Use Custom FileUpload Interceptor
-   * Upload a PDF or JPEG document for the user
-   * Validates file type and size (max 5MB)
-   * -------------------------------------------------------------------- */
-  @UseInterceptors(createFileUploadInterceptor())
-  @Post(':id/upload-document')
-  uploadDocument(
-    @Param('id', ParseUUIDPipe) id: string,
-    @UploadedFile() file: Express.Multer.File,
-  ) {
-    console.log('uploadDocument', file);
-    if (!file) {
-      throw new BadRequestException('No file provided');
-    }
-
-    return this.userService.uploadDocument(id, file);
   }
 }

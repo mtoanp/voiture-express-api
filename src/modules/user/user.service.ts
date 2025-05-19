@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
@@ -171,5 +172,26 @@ export class UserService {
       throw new NotFoundException(`User #${id} not found`);
     }
     return user;
+  }
+
+  async removeDocument(userId: string): Promise<{ success: boolean }> {
+    const user = await this.verifyUserExists(userId);
+
+    if (!user.document) {
+      throw new BadRequestException('No document to remove');
+    }
+
+    const documentUrl = user.document;
+    const bucketUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
+    const key = documentUrl.replace(bucketUrl, '');
+
+    await this.cloudService.delete(key); // Pass the full S3 key
+
+    await this.databaseService.user.update({
+      where: { id: userId },
+      data: { document: null },
+    });
+
+    return { success: true };
   }
 }
