@@ -43,6 +43,12 @@ export class UserService {
    * -------------------------------------------------------------------- */
   async findOne(id: string) {
     const user = await this.verifyUserExists(id);
+
+    if (user.document) {
+      user.document = this.cloudService.getPublicUrl(user.document); // public
+      // user.document = await this.cloudService.getSignedUrl(user.document); // signed
+    }
+
     return user;
   }
 
@@ -136,6 +142,19 @@ export class UserService {
   }
 
   /* --------------------------------------------------------------------
+   * verifyUserExists
+   * Utility method to check if a user exists by ID
+   * Throws NotFoundException if not found
+   * -------------------------------------------------------------------- */
+  private async verifyUserExists(id: string) {
+    const user = await this.databaseService.user.findUnique({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User #${id} not found`);
+    }
+    return user;
+  }
+
+  /* --------------------------------------------------------------------
    * uploadDocument
    * Upload user document (JPEG/PDF) to S3 and store URL in DB
    * Save the s3-file url to data: user
@@ -149,44 +168,37 @@ export class UserService {
     const fileKey = `${id}${fileExtension}`;
 
     // Upload file to s3 clound
-    const upload_url = await this.cloudService.upload(file, fileKey, 'product');
+    const upload_key = await this.cloudService.upload(file, fileKey, 'product');
 
     // Update user document_url
-    console.log('public url:', upload_url);
     const updatedUser = await this.databaseService.user.update({
       where: { id },
-      data: { document: upload_url },
+      data: { document: upload_key },
     });
 
-    // return updatedUser;
+    console.log('key:', upload_key);
 
-    // Generate signed URL for preview/download
-    const signedUrl = await this.cloudService.generateSignedUrl(
-      fileKey,
-      'product',
-      10, // 10s
+    // Get public url
+    const public_url = this.cloudService.getPublicUrl(upload_key);
+    console.log('public url:', public_url);
+
+    // Get signed URL for preview/download
+    const signedUrl = await this.cloudService.getSignedUrl(
+      upload_key,
+      20, // 10s
     );
     console.log('signed url:', signedUrl);
-    // 6. Return updated user + signed URL
+
+    // Return updated user + signed URL
     return {
       ...updatedUser,
-      signedUrl,
+      document: public_url,
     };
   }
 
   /* --------------------------------------------------------------------
-   * verifyUserExists
-   * Utility method to check if a user exists by ID
-   * Throws NotFoundException if not found
+   * removeDocument
    * -------------------------------------------------------------------- */
-  private async verifyUserExists(id: string) {
-    const user = await this.databaseService.user.findUnique({ where: { id } });
-    if (!user) {
-      throw new NotFoundException(`User #${id} not found`);
-    }
-    return user;
-  }
-
   async removeDocument(userId: string): Promise<{ success: boolean }> {
     const user = await this.verifyUserExists(userId);
 
