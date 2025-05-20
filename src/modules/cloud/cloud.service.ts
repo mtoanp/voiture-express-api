@@ -25,7 +25,15 @@ export class CloudService {
     fileKey: string,
     folder: string,
   ): Promise<string> {
-    const key = `${folder}/${fileKey}`;
+    const key = `${folder}/${fileKey}`; // 'documents/abc123.pdf'
+
+    // Optional: Add file validation
+    // if (file.size > 5_000_000) {
+    //   throw new BadRequestException('File too large (max 5MB)');
+    // }
+    // if (!['image/jpeg', 'application/pdf'].includes(file.mimetype)) {
+    //   throw new BadRequestException('Invalid file type');
+    // }
 
     try {
       await s3Client.send(
@@ -38,8 +46,8 @@ export class CloudService {
         }),
       );
 
-      // Return public S3 URL
-      return this.getPublicUrl(key);
+      // Return key: 'documents/abc123.pdf' > save to db
+      return key;
     } catch (error) {
       console.error('S3 upload (public) failed:', error);
       throw new InternalServerErrorException(
@@ -48,64 +56,18 @@ export class CloudService {
     }
   }
 
-  /**
+  /* --------------------------------------------------------------------
    * Helper to build public S3 URL from key.
-   */
+   * -------------------------------------------------------------------- */
   getPublicUrl(key: string): string {
     return `https://${this.bucket}.s3.${this.region}.amazonaws.com/${key}`;
-  }
-
-  /* --------------------------------------------------------------------
-   * Upload a file to S3 with private access (requires signed URL to access).
-   * Use for sensitive documents, permits, contracts, etc.
-   * -------------------------------------------------------------------- */
-  async uploadSigned(
-    file: Express.Multer.File,
-    fileKey: string,
-    folder: string,
-  ): Promise<string> {
-    const key = `${folder}/${fileKey}`;
-
-    // Optional: Add file validation
-    if (file.size > 5_000_000) {
-      throw new BadRequestException('File too large (max 5MB)');
-    }
-    if (!['image/jpeg', 'application/pdf'].includes(file.mimetype)) {
-      throw new BadRequestException('Invalid file type');
-    }
-
-    try {
-      await s3Client.send(
-        new PutObjectCommand({
-          Bucket: this.bucket,
-          Key: key,
-          Body: file.buffer,
-          ContentType: file.mimetype,
-          // No ACL → keeps the file private
-        }),
-      );
-
-      // Return only the key (e.g. 'permis/uuid-file.pdf')
-      return key;
-    } catch (error) {
-      console.error('S3 upload (private) failed:', error);
-      throw new InternalServerErrorException(
-        'Failed to upload private file to S3',
-      );
-    }
   }
 
   /* --------------------------------------------------------------------
    * Generate a temporary signed URL to access a private file.
    * This URL is valid only for a short time (default: 1 hour).
    * -------------------------------------------------------------------- */
-  async generateSignedUrl(
-    fileKey: string,
-    folder: string,
-    expiresInSeconds = 3600,
-  ): Promise<string> {
-    const key = `${folder}/${fileKey}`;
-
+  async getSignedUrl(key: string, expiresInSeconds = 3600): Promise<string> {
     const command = new GetObjectCommand({
       Bucket: this.bucket,
       Key: key,
