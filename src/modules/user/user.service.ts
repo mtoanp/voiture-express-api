@@ -142,7 +142,7 @@ export class UserService {
    * -------------------------------------------------------------------- */
   async uploadDocument(id: string, file: Express.Multer.File) {
     // Check user exist
-    const user = await this.verifyUserExists(id);
+    await this.verifyUserExists(id);
 
     // Prepare file for cloud upload
     const fileExtension = extname(file.originalname);
@@ -152,13 +152,26 @@ export class UserService {
     const upload_url = await this.cloudService.upload(file, fileKey, 'product');
 
     // Update user document_url
-    console.log(upload_url);
+    console.log('public url:', upload_url);
     const updatedUser = await this.databaseService.user.update({
       where: { id },
       data: { document: upload_url },
     });
 
-    return updatedUser;
+    // return updatedUser;
+
+    // Generate signed URL for preview/download
+    const signedUrl = await this.cloudService.generateSignedUrl(
+      fileKey,
+      'product',
+      10, // 10s
+    );
+    console.log('signed url:', signedUrl);
+    // 6. Return updated user + signed URL
+    return {
+      ...updatedUser,
+      signedUrl,
+    };
   }
 
   /* --------------------------------------------------------------------
