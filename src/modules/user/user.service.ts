@@ -167,8 +167,8 @@ export class UserService {
     const fileExtension = extname(file.originalname);
     const fileKey = `${id}${fileExtension}`;
 
-    // Upload file to s3 clound
-    const upload_key = await this.cloudService.upload(file, fileKey, 'product');
+    // Upload file to s3 clound > 'prefix: permis'
+    const upload_key = await this.cloudService.upload(file, fileKey, 'permis');
 
     // Update user document_url
     const updatedUser = await this.databaseService.user.update({
@@ -177,7 +177,6 @@ export class UserService {
     });
 
     // Get public url
-    // console.log('key:', upload_key);
     // const public_url = this.cloudService.getPublicUrl(upload_key);
     // console.log('public url:', public_url);
 
@@ -205,11 +204,8 @@ export class UserService {
       throw new BadRequestException('No document to remove');
     }
 
-    const documentUrl = user.document;
-    const bucketUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
-    const key = documentUrl.replace(bucketUrl, '');
-
-    await this.cloudService.delete(key); // Pass the full S3 key
+    const key = user.document;
+    await this.cloudService.delete(key); // Pass S3 key: /permis/file.pdf
 
     await this.databaseService.user.update({
       where: { id: userId },
