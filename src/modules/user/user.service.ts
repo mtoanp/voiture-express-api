@@ -45,8 +45,8 @@ export class UserService {
     const user = await this.verifyUserExists(id);
 
     if (user.document) {
-      user.document = this.cloudService.getPublicUrl(user.document); // public
-      // user.document = await this.cloudService.getSignedUrl(user.document); // signed
+      // user.document = this.cloudService.getPublicUrl(user.document); // public
+      user.document = await this.cloudService.getSignedUrl(user.document); // signed
     }
 
     return user;
@@ -176,23 +176,22 @@ export class UserService {
       data: { document: upload_key },
     });
 
-    console.log('key:', upload_key);
-
     // Get public url
-    const public_url = this.cloudService.getPublicUrl(upload_key);
-    console.log('public url:', public_url);
+    // console.log('key:', upload_key);
+    // const public_url = this.cloudService.getPublicUrl(upload_key);
+    // console.log('public url:', public_url);
 
     // Get signed URL for preview/download
     const signedUrl = await this.cloudService.getSignedUrl(
       upload_key,
-      20, // 10s
+      60, // 60s
     );
     console.log('signed url:', signedUrl);
 
     // Return updated user + signed URL
     return {
       ...updatedUser,
-      document: public_url,
+      document: signedUrl,
     };
   }
 
