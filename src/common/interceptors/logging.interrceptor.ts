@@ -7,7 +7,7 @@ import {
 import { Observable, tap, catchError } from 'rxjs';
 import { throwError } from 'rxjs';
 import chalk from 'chalk';
-chalk.level = 3; // Force-enable color support (0 = no color, 3 = 16M colors)
+chalk.level = 3; // Force-enable color support (0 = no color, 3 = 16M colors) > Docker's logs colorized
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -23,7 +23,6 @@ export class LoggingInterceptor implements NestInterceptor {
 
     console.log(chalk.gray('────────────────────────────────────────────'));
     // 🟢 FIRST LOG — on request arrival
-    // process.stdout.write
     console.log(
       `${method} ${url} > ` +
         chalk.green(controller) +
