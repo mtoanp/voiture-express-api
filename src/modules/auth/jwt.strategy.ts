@@ -23,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
    * In this case, we return the user's id, email, and role from the token.
    * -------------------------------------------------------------------- */
   validate(payload: any) {
-    console.log('JwtStrategy > validate');
+    // console.log('JwtStrategy > validate');
     return { id: payload.sub, email: payload.email, role: payload.role };
   }
 }

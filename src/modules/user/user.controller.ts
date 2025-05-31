@@ -20,8 +20,8 @@ import { RemovePasswordInterceptor } from './interceptors/remove-password.interc
 import { CurrentUser, Roles } from '@/common/decorators';
 import { JwtAuthGuard, RolesGuard, IsOwnerGuard } from '@/common/guards';
 import { User } from './entities/user.entity';
-import type { Multer } from 'multer';
 import { createFileUploadInterceptor } from '@/common/interceptors/file-upload.interceptor';
+// import type { Multer } from 'multer';
 
 @UseInterceptors(RemovePasswordInterceptor)
 @Controller('users') // /users
@@ -34,7 +34,7 @@ export class UserController {
    * -------------------------------------------------------------------- */
   @Get() // GET /users or /users?role=value
   findAll(@Query('role') role?: 'user' | 'admin') {
-    console.log('UserController > findAll');
+    // console.log('UserController > findAll');
     return this.userService.findAll(role);
   }
 
@@ -44,7 +44,7 @@ export class UserController {
    * -------------------------------------------------------------------- */
   @Get(':id') // GET /users/:id
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    console.log('UserController > findOne');
+    // console.log('UserController > log in the middle');
     return this.userService.findOne(id);
   }
 
@@ -54,7 +54,7 @@ export class UserController {
    * -------------------------------------------------------------------- */
   @Post() // POST /users
   create(@Body() createUserDto: CreateUserDto) {
-    console.log('UserController > create');
+    // console.log('UserController > create');
     return this.userService.create(createUserDto);
   }
 
@@ -70,7 +70,7 @@ export class UserController {
     @Body() updateUserDto: UpdateUserDto,
     @CurrentUser() currentUser: User,
   ) {
-    console.log('UserController > update', updateUserDto, currentUser.id);
+    // console.log('UserController > update', updateUserDto, currentUser.id);
     return this.userService.update(id, updateUserDto);
   }
 
@@ -82,7 +82,7 @@ export class UserController {
   @UseGuards(JwtAuthGuard, IsOwnerGuard)
   @Delete(':id') // DELETE /users/:id
   remove(@Param('id', ParseUUIDPipe) id: string) {
-    console.log('UserController > remove');
+    // console.log('UserController > remove');
     return this.userService.remove(id);
   }
 
@@ -110,7 +110,7 @@ export class UserController {
     @Param('id', ParseUUIDPipe) id: string,
     @UploadedFile() file: Express.Multer.File,
   ) {
-    console.log('UserController > uploadDocument', file);
+    // console.log('UserController > uploadDocument', file);
     if (!file) {
       throw new BadRequestException('No file provided');
     }
@@ -124,7 +124,7 @@ export class UserController {
    * -------------------------------------------------------------------- */
   @Delete(':id/remove-document')
   removeDocument(@Param('id', ParseUUIDPipe) id: string) {
-    console.log('UserController > removeDocument');
+    // console.log('UserController > removeDocument');
     return this.userService.removeDocument(id);
   }
 }
