@@ -23,7 +23,7 @@ export class AuthController {
    * -------------------------------------------------------------------- */
   @Post('login')
   async login(@Body() loginDto: LoginDto) {
-    console.log('AuthController > login');
+    // console.log('AuthController > login');
     const user = await this.authService.validateUser(
       loginDto.email,
       loginDto.password,
@@ -58,7 +58,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Get('getCurrentUser')
   getCurrentUser(@CurrentUser() currentUser: any) {
-    console.log('AuthController > getCurrentUser', currentUser.id);
+    // console.log('AuthController > getCurrentUser', currentUser.id);
     return currentUser;
   }
 }

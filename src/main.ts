@@ -4,6 +4,8 @@ import { ConfigService } from '@nestjs/config';
 import { AllExceptionFilter } from '@/common/filters/all-exeption.filter';
 import { setupSecurity } from '@/config/security.config';
 import packageJson from '../package.json';
+import { LoggingInterceptor } from './common/interceptors/logging.interrceptor';
+import chalk from 'chalk';
 
 async function bootstrap() {
   try {
@@ -27,6 +29,9 @@ async function bootstrap() {
     //   type: VersioningType.URI,
     // });
 
+    // Logger
+    app.useGlobalInterceptors(new LoggingInterceptor());
+
     // 🔧 Get PORT from .env
     const port = configService.get<number>('PORT') ?? 3000;
 
@@ -35,8 +40,9 @@ async function bootstrap() {
     // 📦 Access app version from package.json
     const version = packageJson.version;
 
-    console.log('==================================================');
-    console.log(`🚀 Server started on port ${port} (v${version})`);
+    console.log(chalk.gray('────────────────────────────────────────────'));
+    console.log(chalk.green(`🚀 Server started on port ${port} (v${version})`));
+    console.log(chalk.gray('────────────────────────────────────────────'));
   } catch (err) {
     console.error('❌ Failed to start NestJS app:', err);
   }
