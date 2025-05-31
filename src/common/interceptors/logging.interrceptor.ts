@@ -7,6 +7,7 @@ import {
 import { Observable, tap, catchError } from 'rxjs';
 import { throwError } from 'rxjs';
 import chalk from 'chalk';
+chalk.level = 3; // Force-enable color support (0 = no color, 3 = 16M colors)
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
